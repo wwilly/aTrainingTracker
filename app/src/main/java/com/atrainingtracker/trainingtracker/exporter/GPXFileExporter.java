@@ -65,14 +65,17 @@ public class GPXFileExporter extends BaseFileExporter {
 
 
         // write the header data to the file
-        bufferedWriter.write("<?xml version=\"1.0\"?>\n");
+        bufferedWriter.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
         String name = TrainingApplication.getAppName();
         if (HavePressureSensor.havePressureSensor(mContext)) {
             name += " with barometer";
         } // add "with barometer" when a barometer was/is available, see Strava API Documentations
-        bufferedWriter.write("<gpx xmlns=\"http://www.topografix.com/GPX/1/1\" creator=\"" + name + "\" version=\"1.1\" "
-                + "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
-                + "xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd\"> \n");
+        bufferedWriter.write("<gpx creator=\"" + name + "\" version=\"1.1\" "
+//                + "xmlns=\"http://www.topografix.com/GPX/1/1\"  "
+//                + "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
+//                + "xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd\"> "
+                + "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd http://www.garmin.com/xmlschemas/GpxExtensions/v3 http://www.garmin.com/xmlschemas/GpxExtensionsv3.xsd http://www.garmin.com/xmlschemas/TrackPointExtension/v1 http://www.garmin.com/xmlschemas/TrackPointExtensionv1.xsd\" xmlns=\"http://www.topografix.com/GPX/1/1\" xmlns:gpxtpx=\"http://www.garmin.com/xmlschemas/TrackPointExtension/v1\" xmlns:gpxx=\"http://www.garmin.com/xmlschemas/GpxExtensions/v3\" "
+                + ">\n");
 
         bufferedWriter.write(" <metadata>\n");
         bufferedWriter.write("  <time>" + dbTime2XMLTime(startTime) + "</time>\n");
@@ -159,6 +162,25 @@ public class GPXFileExporter extends BaseFileExporter {
                     bufferedWriter.write("    <time>"
                             + dbTime2XMLTime(cursor.getString(cursor.getColumnIndexOrThrow(WorkoutSamplesDbHelper.TIME)))
                             + "</time>\n");
+
+                    bufferedWriter.write("    <extensions>\n");
+                    bufferedWriter.write("      <gpxtpx:TrackPointExtension>\n");
+
+                    if (haveHR && dataValid(cursor, SensorType.HR.name())) {
+                        int hr = cursor.getInt(cursor.getColumnIndexOrThrow(SensorType.HR.name()));
+                        bufferedWriter.write("        <gpxtpx:hr>" + hr + "</gpxtpx:hr>\n");
+                    }
+                    if (haveDistance && dataValid(cursor, SensorType.DISTANCE_m.name())) {
+                        double distance = cursor.getDouble(cursor.getColumnIndexOrThrow(SensorType.DISTANCE_m.name()));
+                        bufferedWriter.write("        <gpxtpx:distance>" + distance + "</gpxtpx:distance>\n");
+                    }
+                    if (haveCadence && dataValid(cursor, SensorType.CADENCE.name())) {
+                        double cadence = cursor.getDouble(cursor.getColumnIndexOrThrow(SensorType.CADENCE.name()));
+                        bufferedWriter.write("        <gpxtpx:cadence>" + cadence + "</gpxtpx:cadence>\n");
+                    }
+
+                    bufferedWriter.write("       </gpxtpx:TrackPointExtension>\n");
+                    bufferedWriter.write("    </extensions>\n");
 
                     bufferedWriter.write("   </trkpt>\n");
                 }
